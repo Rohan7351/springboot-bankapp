@@ -4,7 +4,11 @@ pipeline {
     environment {
         IMAGE_NAME = "springboot-bankapp"
         DOCKER_TAG = "latest"
-        SONARQUBE_SERVER = 'SonarQube'  // This must match the SonarQube name in Jenkins > Manage Jenkins > Configure System
+        SONARQUBE_SERVER = 'SonarQube' // must match name configured in Jenkins > Configure System
+    }
+
+    tools {
+        maven 'Maven 3.8.8' // replace with your installed Maven name if different
     }
 
     stages {
@@ -29,14 +33,14 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${SONARQUBE_SERVER}") {
-                    bat './mvnw sonar:sonar -Dsonar.projectKey=springboot-bankapp -Dsonar.token=%SONAR_TOKEN%'
+                    bat './mvnw sonar:sonar -Dsonar.projectKey=springboot-bankapp'
                 }
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                bat 'docker build -t %IMAGE_NAME%:%DOCKER_TAG% .'
+                bat "docker build -t %IMAGE_NAME%:%DOCKER_TAG% ."
             }
         }
     }
