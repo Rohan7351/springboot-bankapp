@@ -4,6 +4,7 @@ pipeline {
     environment {
         IMAGE_NAME = "springboot-bankapp"
         DOCKER_TAG = "latest"
+        SONARQUBE_SERVER = 'SonarQube'  // This must match the SonarQube name in Jenkins > Manage Jenkins > Configure System
     }
 
     stages {
@@ -21,25 +22,22 @@ pipeline {
 
         stage('Build with Maven') {
             steps {
-                bat '.\\mvnw.cmd clean package -DskipTests'
+                bat './mvnw clean package -DskipTests'
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv("${SONARQUBE_SERVER}") {
+                    bat './mvnw sonar:sonar -Dsonar.projectKey=springboot-bankapp -Dsonar.token=%SONAR_TOKEN%'
+                }
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                bat "docker build -t %IMAGE_NAME%:%DOCKER_TAG% ."
+                bat 'docker build -t %IMAGE_NAME%:%DOCKER_TAG% .'
             }
         }
-
-        // Uncomment below if you want to push to DockerHub
-        // stage('Push Docker Image') {
-        //     steps {
-        //         withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-        //             bat 'echo %PASSWORD% | docker login -u %USERNAME% --password-stdin'
-        //             bat 'docker tag %IMAGE_NAME%:%DOCKER_TAG% %USERNAME%/%IMAGE_NAME%:%DOCKER_TAG%'
-        //             bat 'docker push %USERNAME%/%IMAGE_NAME%:%DOCKER_TAG%'
-        //         }
-        //     }
-        // }
     }
 }
