@@ -29,10 +29,11 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${SONARQUBE_SERVER}") {
-                    bat './mvnw sonar:sonar -Dsonar.projectKey=springboot-bankapp -Dsonar.token=%SONAR_TOKEN%'
+                    bat './mvnw clean verify sonar:sonar -Dsonar.projectKey=springboot-bankapp -Dsonar.token=%SONAR_TOKEN% -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml'
                 }
             }
         }
+
 
         stage('Build Docker Image') {
             steps {
