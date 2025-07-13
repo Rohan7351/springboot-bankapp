@@ -1,87 +1,45 @@
-@Library('Shared') _
 pipeline {
     agent any
-    
-    environment{
-        SONAR_HOME = tool "Sonar"
+
+    environment {
+        IMAGE_NAME = "springboot-bankapp"
+        DOCKER_TAG = "latest"
     }
-    
-    parameters {
-        string(name: 'DOCKER_TAG', defaultValue: '', description: 'Setting docker image for latest push')
-    }
-    
+
     stages {
-        
-        stage("Workspace cleanup"){
-            steps{
-                script{
-                    cleanWs()
-                }
-            }
-        }
-        
-        stage('Git: Code Checkout') {
+        stage('Clean workspace') {
             steps {
-                script{
-                    code_checkout("https://github.com/LondheShubham153/Springboot-BankApp.git","DevOps")
-                }
-            }
-        }
-        
-        stage("Trivy: Filesystem scan"){
-            steps{
-                script{
-                    trivy_scan()
-                }
+                cleanWs()
             }
         }
 
-        stage("OWASP: Dependency check"){
-            steps{
-                script{
-                    owasp_dependency()
-                }
-            }
-        }
-        
-        stage("SonarQube: Code Analysis"){
-            steps{
-                script{
-                    sonarqube_analysis("Sonar","bankapp","bankapp")
-                }
-            }
-        }
-        
-        stage("SonarQube: Code Quality Gates"){
-            steps{
-                script{
-                    sonarqube_code_quality()
-                }
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/Rohan7351/springboot-bankapp.git'
             }
         }
 
-        stage("Docker: Build Images"){
-            steps{
-                script{
-                    docker_build("bankapp","${params.DOCKER_TAG}","madhupdevops")
-                }
+        stage('Build with Maven') {
+            steps {
+                sh './mvnw clean package -DskipTests'
             }
         }
-        
-        stage("Docker: Push to DockerHub"){
-            steps{
-                script{
-                    docker_push("bankapp","${params.DOCKER_TAG}","madhupdevops")
-                }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t $IMAGE_NAME:$DOCKER_TAG .'
             }
         }
-    }
-    post{
-        success{
-            archiveArtifacts artifacts: '*.xml', followSymlinks: false
-            build job: "BankApp-CD", parameters: [
-                string(name: 'DOCKER_TAG', value: "${params.DOCKER_TAG}")
-            ]
-        }
+
+        // Uncomment below if you want to push to DockerHub
+        // stage('Push Docker Image') {
+        //     steps {
+        //         withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+        //             sh 'echo $PASSWORD | docker login -u $USERNAME --password-stdin'
+        //             sh 'docker tag $IMAGE_NAME:$DOCKER_TAG $USERNAME/$IMAGE_NAME:$DOCKER_TAG'
+        //             sh 'docker push $USERNAME/$IMAGE_NAME:$DOCKER_TAG'
+        //         }
+        //     }
+        // }
     }
 }
