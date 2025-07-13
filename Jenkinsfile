@@ -21,13 +21,13 @@ pipeline {
 
         stage('Build with Maven') {
             steps {
-                sh './mvnw clean package -DskipTests'
+                bat '.\\mvnw.cmd clean package -DskipTests'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $IMAGE_NAME:$DOCKER_TAG .'
+                bat "docker build -t %IMAGE_NAME%:%DOCKER_TAG% ."
             }
         }
 
@@ -35,9 +35,9 @@ pipeline {
         // stage('Push Docker Image') {
         //     steps {
         //         withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-        //             sh 'echo $PASSWORD | docker login -u $USERNAME --password-stdin'
-        //             sh 'docker tag $IMAGE_NAME:$DOCKER_TAG $USERNAME/$IMAGE_NAME:$DOCKER_TAG'
-        //             sh 'docker push $USERNAME/$IMAGE_NAME:$DOCKER_TAG'
+        //             bat 'echo %PASSWORD% | docker login -u %USERNAME% --password-stdin'
+        //             bat 'docker tag %IMAGE_NAME%:%DOCKER_TAG% %USERNAME%/%IMAGE_NAME%:%DOCKER_TAG%'
+        //             bat 'docker push %USERNAME%/%IMAGE_NAME%:%DOCKER_TAG%'
         //         }
         //     }
         // }
